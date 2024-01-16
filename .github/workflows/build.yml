@@ -122,6 +122,7 @@ jobs:
           ./build.sh --packages -f net6.0 -r linux-musl-x64
           rm -rf _artifacts/linux-musl-x64/net6.0/Radarr/Radarr.Update
           find . -name "Radarr" -exec chmod a+x {} \;
+          find . -name "ffprobe" -exec chmod a+x {} \;
 
       - name: Docker meta
         id: docker_meta
