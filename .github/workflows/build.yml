@@ -31,27 +31,33 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.branch || 'develop' }}
   cancel-in-progress: true
 
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_VERSION: 6.0.419
+  FRAMEWORK: net6.0
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+  RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  BRANCH_TO_BUILD: ${{ inputs.branch || 'develop' }}
+  BUILD_SOURCEBRANCHNAME: develop
+
 jobs:
-  build:
-    name: "Build Docker Image (${{ github.event.pull_request.number || inputs.branch || 'develop' }})"
+  metadata:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/nightly'
-    env:
-      CI: 1
-      FORCE_COLOR: 0
-      NO_COLOR: 1
-      BUILD_SOURCEBRANCHNAME: develop
-      BRANCH_TO_BUILD: ${{ inputs.branch || 'develop' }}
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      DOTNET_VERSION: 6.0.419
-      RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+    outputs:
+      branch: ${{ steps.gen_meta.outputs.branch }}
+      version: ${{ steps.ext_release.outputs.version }}
+      semantic_version: ${{ steps.ext_release.outputs.version }}
     steps:
       - name: Generate metadata
         id: gen_meta
         run: |
-          echo "tag_branch=${{ env.BRANCH_TO_BUILD }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
           echo "BRANCH=${RAW_BRANCH_NAME/\//-}" >> "$GITHUB_ENV"
+          echo "tag_branch=${BRANCH_TO_BUILD/\//-}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+
+          echo "branch=${{ env.BRANCH }}" >> "$GITHUB_OUTPUT"
+
+          echo "Build branch: ${BRANCH_TO_BUILD}" >> $GITHUB_STEP_SUMMARY
 
       - name: Retrieving external version
         id: ext_release
@@ -75,7 +81,96 @@ jobs:
             echo "**** Can't parse semantic version, exiting ****"
             exit 2
           fi
+          echo "version=${{ env.RADARRVERSION }}" >> "$GITHUB_OUTPUT"
+          
+  backend:
+    needs: metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+        
+      - uses: actions/checkout@v4.1.1
+        with:
+          repository: Radarr/Radarr
+          ref: ${{ env.BRANCH_TO_BUILD }}
+          path: build
+          
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4.0.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - uses: actions/cache@v4.0.0
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget
 
+      - name: Create global.json
+        run: |
+          echo '{"sdk":{"version": "${{ env.DOTNET_VERSION }}"}}' > global.json
+
+      - name: dotnet info
+        working-directory: build
+        run: dotnet --info
+        
+      - name: Build Backend
+        working-directory: build
+        shell: bash
+        run: ./build.sh --backend -r linux-musl-x64
+        
+      - name: Publish Linux Artifact
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build_linux
+          path: build/_output/**/linux-*/publish/*
+          retention-days: 1
+          
+  frontend:
+    needs: metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+        
+      - uses: actions/checkout@v4.1.1
+        with:
+          repository: Radarr/Radarr
+          ref: ${{ env.BRANCH_TO_BUILD }}
+          path: build
+        
+      - uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
+          cache: 'yarn'
+          cache-dependency-path: build/yarn.lock
+
+      - name: Yarn Install
+        working-directory: build
+        run: yarn install
+
+      - name: Lint
+        working-directory: build
+        run: yarn lint
+
+      - name: Build
+        working-directory: build
+        run: yarn build --env production
+
+      - name: Publish UI Artifact
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build_ui
+          path: build/_output/UI/**/*
+          retention-days: 1
+          
+  build_docker:
+    needs: [backend, frontend]
+    strategy:
+      matrix:
+        platform: [linux]
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v4.1.1
 
       - uses: actions/checkout@v4.1.1
@@ -83,49 +178,30 @@ jobs:
           repository: Radarr/Radarr
           ref: ${{ env.BRANCH_TO_BUILD }}
           path: build
-
-      - uses: actions/setup-node@v4.0.2
+        
+      - name: Download Artifact
+        uses: actions/download-artifact@v4.1.3
         with:
-          node-version: '20.x'
-          cache: 'yarn'
-          cache-dependency-path: build/yarn.lock
+          name: build_${{ matrix.platform }}
+          path: build/_output
 
-      - uses: actions/setup-dotnet@v4.0.0
+      - name: Download UI Artifact
+        uses: actions/download-artifact@v4.1.3
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          name: build_ui
+          path: build/_output/UI
 
-      - name: Create temporary global.json
-        run: |
-          echo '{"sdk":{"version": "${{ env.DOTNET_VERSION }}"}}' > ./global.json
-
-      - working-directory: build
-        run: dotnet --info
-
-      - uses: actions/cache@v4.0.0
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget
-
-      - name: Build Backend
+      - name: Create Packages
         working-directory: build
+        shell: bash
         run: |
-          ./build.sh --backend -f net6.0 -r linux-musl-x64
-
-      - name: Build Frontend
-        working-directory: build
-        run: |
-          ./build.sh --frontend --lint
-
-      - name: Build Package
-        working-directory: build
-        run: |
-          ./build.sh --packages -f net6.0 -r linux-musl-x64
-          rm -rf _artifacts/linux-musl-x64/net6.0/Radarr/Radarr.Update
+          ./build.sh --packages -r linux-musl-x64
+          rm -rf _artifacts/*/*/Radarr/Radarr.Update
           find . -name "Radarr" -exec chmod a+x {} \;
           find . -name "ffprobe" -exec chmod a+x {} \;
-
+          tar -zcf "./_artifacts/Radarr.${{ needs.backend.outputs.branch }}.${{ needs.backend.outputs.version }}.tar.gz" -C "./_artifacts/linux-musl-x64/$FRAMEWORK" Radarr
+          ls -lha _artifacts/
+          
       - name: Docker meta
         id: docker_meta
         uses: docker/metadata-action@v5.5.1
@@ -136,13 +212,13 @@ jobs:
             org.opencontainers.image.authors=${{ github.repository_owner }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
           tags: |
-            type=raw,value=${{ env.BRANCH }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.BRANCH }}-${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.BRANCH }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ steps.gen_meta.outputs.tag_branch }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'develop' }}
-            type=raw,value=branch-${{ steps.gen_meta.outputs.tag_branch }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'develop' }}
+            type=raw,value=${{ needs.backend.outputs.branch }}-${{ needs.backend.outputs.version }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && needs.backend.outputs.tag_branch == 'develop' }}
+            type=raw,value=${{ needs.backend.outputs.version }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && needs.backend.outputs.tag_branch == 'develop' }}
+            type=raw,value=${{ needs.backend.outputs.branch }}-${{ needs.backend.outputs.semantic_version }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && needs.backend.outputs.tag_branch == 'develop' }}
+            type=raw,value=${{ needs.backend.outputs.semantic_version }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && needs.backend.outputs.tag_branch == 'develop' }}
+            type=raw,value=${{ needs.backend.outputs.branch }},enable=${{ github.event_name != 'pull_request' && needs.backend.outputs.tag_branch == 'develop' }}
+            type=raw,value=${{ needs.backend.outputs.tag_branch }}-${{ needs.backend.outputs.version }},enable=${{ github.event_name != 'pull_request' && needs.backend.outputs.tag_branch != 'develop' }}
+            type=raw,value=branch-${{ needs.backend.outputs.tag_branch }},enable=${{ github.event_name != 'pull_request' && needs.backend.outputs.tag_branch != 'develop' }}
             type=ref,event=pr
 
       - name: Set up Docker Buildx
@@ -161,9 +237,105 @@ jobs:
         uses: docker/build-push-action@v5.1.0
         with:
           context: .
-          push: true
+          push: false
           platforms: linux/amd64
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
           build-args: |
             VERSION=${{ env.RADARRVERSION }}-${{ env.BRANCH }}-r${{ github.run_number }}
+
+#  build:
+#    needs: metadata
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4.1.1
+#
+#      - uses: actions/checkout@v4.1.1
+#        with:
+#          repository: Radarr/Radarr
+#          ref: ${{ env.BRANCH_TO_BUILD }}
+#          path: build
+#
+#      - uses: actions/setup-node@v4.0.2
+#        with:
+#          node-version: '20.x'
+#          cache: 'yarn'
+#          cache-dependency-path: build/yarn.lock
+#
+#      - uses: actions/setup-dotnet@v4.0.0
+#        with:
+#          dotnet-version: ${{ env.DOTNET_VERSION }}
+#
+#      - name: Create temporary global.json
+#        run: |
+#          echo '{"sdk":{"version": "${{ env.DOTNET_VERSION }}"}}' > ./global.json
+#
+#      - working-directory: build
+#        run: dotnet --info
+#
+#      - uses: actions/cache@v4.0.0
+#        with:
+#          path: ~/.nuget/packages
+#          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+#          restore-keys: |
+#            ${{ runner.os }}-nuget
+#
+#      - name: Build Backend
+#        working-directory: build
+#        run: |
+#          ./build.sh --backend -f net6.0 -r linux-musl-x64
+#
+#      - name: Build Frontend
+#        working-directory: build
+#        run: |
+#          ./build.sh --frontend --lint
+#
+#      - name: Build Package
+#        working-directory: build
+#        run: |
+#          ./build.sh --packages -f net6.0 -r linux-musl-x64
+#          rm -rf _artifacts/linux-musl-x64/net6.0/Radarr/Radarr.Update
+#          find . -name "Radarr" -exec chmod a+x {} \;
+#          find . -name "ffprobe" -exec chmod a+x {} \;
+#
+#      - name: Docker meta
+#        id: docker_meta
+#        uses: docker/metadata-action@v5.5.1
+#        with:
+#          images: |
+#            ghcr.io/${{ github.repository_owner }}/radarr
+#          labels: |
+#            org.opencontainers.image.authors=${{ github.repository_owner }}
+#            org.opencontainers.image.vendor=${{ github.repository_owner }}
+#          tags: |
+#            type=raw,value=${{ env.BRANCH }}-${{ env.RadarrVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'develop' }}
+#            type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'develop' }}
+#            type=raw,value=${{ env.BRANCH }}-${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'develop' }}
+#            type=raw,value=${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'develop' }}
+#            type=raw,value=${{ env.BRANCH }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD == 'develop' }}
+#            type=raw,value=${{ steps.gen_meta.outputs.tag_branch }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'develop' }}
+#            type=raw,value=branch-${{ steps.gen_meta.outputs.tag_branch }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'develop' }}
+#            type=ref,event=pr
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3.0.0
+#        with:
+#          platforms: linux/amd64
+#
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v3.0.0
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.repository_owner }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Build and push
+#        uses: docker/build-push-action@v5.1.0
+#        with:
+#          context: .
+#          push: true
+#          platforms: linux/amd64
+#          tags: ${{ steps.docker_meta.outputs.tags }}
+#          labels: ${{ steps.docker_meta.outputs.labels }}
+#          build-args: |
+#            VERSION=${{ env.RADARRVERSION }}-${{ env.BRANCH }}-r${{ github.run_number }}
