@@ -44,7 +44,7 @@ jobs:
       BRANCH_TO_BUILD: ${{ inputs.branch || 'develop' }}
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
-      DOTNET_VERSION: 6.0.420
+      DOTNET_VERSION: 6.0.421
       RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
       - name: Generate metadata
@@ -96,7 +96,7 @@ jobs:
 
       - name: Create temporary global.json
         run: |
-          echo '{"sdk":{"version": "${{ env.DOTNET_VERSION }}"}}' > ./global.json
+          echo '{"sdk":{"version": "${{ env.DOTNET_VERSION }}"}}' > ./build/global.json
 
       - working-directory: build
         run: dotnet --info
