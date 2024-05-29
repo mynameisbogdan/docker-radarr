@@ -1,10 +1,9 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/linuxserver/baseimage-alpine:3.19
+FROM ghcr.io/linuxserver/baseimage-alpine:3.20
 
 # set version label
 ARG VERSION
-ARG RADARR_RELEASE
 ARG RADARR_BRANCH="nightly"
 
 LABEL build_version=$VERSION
@@ -25,6 +24,7 @@ RUN set -eux && \
   echo "**** install radarr ****" && \
   mkdir -p /app/radarr/bin && \
   echo -e "UpdateMethod=docker\nBranch=${RADARR_BRANCH}\nPackageVersion=${VERSION}" > /app/radarr/package_info && \
+  printf "Custom version: ${VERSION}" > /build_version && \
   echo "**** cleanup ****" && \
   rm -rf \
     /app/radarr/bin/Radarr.Update \
