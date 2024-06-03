@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete old images
-        uses: snok/container-retention-policy@v2.1.3
+        uses: snok/container-retention-policy@v2.2.1
         with:
           image-names: radarr
-          cut-off: 1 hour ago UTC
+          cut-off: 1 week ago UTC
           timestamp-to-use: updated_at
-          keep-at-least: 3
+          keep-at-least: 10
           skip-tags: latest,develop,nightly
           account-type: personal
           token: ${{ secrets.GHCR_PAT }}
