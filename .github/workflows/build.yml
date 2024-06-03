@@ -35,7 +35,7 @@ jobs:
   build:
     name: "Build Docker Image (${{ github.event.pull_request.number || inputs.branch || 'develop' }})"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/nightly'
+    if: ${{ !github.event.pull_request.head.repo.fork }}
     env:
       CI: 1
       FORCE_COLOR: 0
@@ -86,8 +86,6 @@ jobs:
       - uses: actions/setup-node@v4.0.2
         with:
           node-version: '20.x'
-          cache: 'yarn'
-          cache-dependency-path: build/yarn.lock
 
       - uses: actions/setup-dotnet@v4.0.0
         with:
@@ -99,13 +97,6 @@ jobs:
 
       - working-directory: build
         run: dotnet --info
-
-      - uses: actions/cache@v4.0.2
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget
 
       - name: Build Backend
         working-directory: build
