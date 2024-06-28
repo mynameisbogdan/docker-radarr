@@ -20,10 +20,10 @@ jobs:
       - name: Delete old images
         uses: snok/container-retention-policy@v3.0.0
         with:
-          image-names: radarr
-          cut-off: 1 week ago UTC
-          timestamp-to-use: updated_at
-          keep-at-least: 10
-          skip-tags: latest,develop,nightly
-          account-type: personal
+          account: user
           token: ${{ secrets.GHCR_PAT }}
+          image-names: radarr
+          image-tags: "!latest !develop !nightly"
+          cut-off: 1w
+          keep-n-most-recent: 10
+          timestamp-to-use: updated_at
