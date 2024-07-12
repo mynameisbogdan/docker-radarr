@@ -83,11 +83,11 @@ jobs:
           ref: ${{ env.BRANCH_TO_BUILD }}
           path: build
 
-      - uses: actions/setup-node@v4.0.2
+      - uses: actions/setup-node@v4.0.3
         with:
           node-version: '20.x'
 
-      - uses: actions/setup-dotnet@v4.0.0
+      - uses: actions/setup-dotnet@v4.0.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
