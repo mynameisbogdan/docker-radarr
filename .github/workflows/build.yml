@@ -7,7 +7,7 @@ on:
         description: 'Branch to build'
         required: true
         type: string
-        default: 'develop'
+        default: 'build'
   schedule:
     - cron: '0 21 * * 5'
   pull_request:
@@ -28,12 +28,12 @@ permissions:
   packages: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.branch || 'develop' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.branch || 'build' }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: "Build Docker Image (${{ github.event.pull_request.number || inputs.branch || 'develop' }})"
+    name: "Build Docker Image (${{ github.event.pull_request.number || inputs.branch || 'build' }})"
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.head.repo.fork }}
     env:
@@ -43,7 +43,7 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: true
       DOTNET_VERSION: 6.0.424
       BUILD_SOURCEBRANCHNAME: develop
-      BRANCH_TO_BUILD: ${{ inputs.branch || 'develop' }}
+      BRANCH_TO_BUILD: ${{ inputs.branch || 'build' }}
       RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
       - name: Generate metadata
@@ -79,7 +79,7 @@ jobs:
 
       - uses: actions/checkout@v4.1.7
         with:
-          repository: Radarr/Radarr
+          repository: ${{ github.repository_owner }}/Radarr
           ref: ${{ env.BRANCH_TO_BUILD }}
           path: build
 
@@ -126,13 +126,13 @@ jobs:
             org.opencontainers.image.authors=${{ github.repository_owner }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
           tags: |
-            type=raw,value=${{ env.BRANCH }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.BRANCH }}-${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ env.BRANCH }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD == 'develop' }}
-            type=raw,value=${{ steps.gen_meta.outputs.tag_branch }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'develop' }}
-            type=raw,value=branch-${{ steps.gen_meta.outputs.tag_branch }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'develop' }}
+            type=raw,value=${{ env.BRANCH }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
+            type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
+            type=raw,value=${{ env.BRANCH }}-${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
+            type=raw,value=${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
+            type=raw,value=${{ env.BRANCH }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD == 'build' }}
+            type=raw,value=${{ steps.gen_meta.outputs.tag_branch }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'build' }}
+            type=raw,value=branch-${{ steps.gen_meta.outputs.tag_branch }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'build' }}
             type=ref,event=pr
 
       - name: Set up Docker Buildx
