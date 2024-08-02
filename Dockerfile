@@ -13,7 +13,7 @@ LABEL maintainer="nobody"
 ENV XDG_CONFIG_HOME="/config/xdg"
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
 
-COPY build/_artifacts/linux-musl-x64/net6.0/Radarr/ /app/radarr/bin
+COPY build/_artifacts/linux-musl-x64/net8.0/Radarr/ /app/radarr/bin
 
 RUN set -eux && \
   echo "**** install packages ****" && \
