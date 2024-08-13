@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   build:
-    name: "Build Docker Image (${{ github.event.pull_request.number || inputs.branch || 'build' }})"
+    name: "Build Docker Image (${{ inputs.branch || 'build' }})"
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.head.repo.fork }}
     env:
