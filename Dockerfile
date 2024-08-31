@@ -1,39 +1,44 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/linuxserver/baseimage-alpine:3.20
+FROM docker.io/library/alpine:3.22
 
-# set version label
 ARG VERSION
-ARG RADARR_BRANCH="nightly"
 
-LABEL build_version=$VERSION
-LABEL maintainer="nobody"
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+  DOTNET_EnableDiagnostics=0 \
+  RADARR__UPDATE__BRANCH=nightly
 
-# environment settings
-ENV XDG_CONFIG_HOME="/config/xdg"
-ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
+USER root
+WORKDIR /app
 
-COPY build/_artifacts/linux-musl-x64/net8.0/Radarr/ /app/radarr/bin
+COPY --chown=0:0 --chmod=755 \
+  build/_artifacts/linux-musl-x64/net8.0/Radarr/ /app/radarr/bin
 
 RUN set -eux && \
   echo "**** install packages ****" && \
   apk add -U --upgrade --no-cache \
+    bash \
+    ca-certificates \
+    catatonit \
+    curl \
     icu-libs \
-    sqlite-libs \
-    xmlstarlet && \
+    tzdata \
+    gnu-libiconv \
+    file && \
   echo "**** install radarr ****" && \
   mkdir -p /app/radarr/bin && \
-  echo -e "UpdateMethod=docker\nBranch=${RADARR_BRANCH}\nPackageVersion=${VERSION}" > /app/radarr/package_info && \
-  printf "Custom version: ${VERSION}" > /build_version && \
+  echo -e "UpdateMethod=docker\nBranch=${RADARR__UPDATE__BRANCH}\nPackageVersion=${VERSION}" > /app/radarr/package_info && \
   echo "**** cleanup ****" && \
   rm -rf \
     /app/radarr/bin/Radarr.Update \
     /tmp/*
 
-# copy local files
 COPY root/ /
 
-# ports and volumes
+USER nobody:nogroup
+WORKDIR /config
+VOLUME ["/config"]
+
 EXPOSE 7878
 
-VOLUME /config
+ENTRYPOINT ["/usr/bin/catatonit", "--", "/entrypoint.sh"]
