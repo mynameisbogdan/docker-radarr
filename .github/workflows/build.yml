@@ -120,6 +120,7 @@ jobs:
           labels: |
             org.opencontainers.image.authors=${{ github.repository_owner }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
+            build_version=${{ env.RADARRVERSION }}
           tags: |
             type=raw,value=${{ env.BRANCH }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
             type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
