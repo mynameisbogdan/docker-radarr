@@ -9,7 +9,7 @@ on:
         type: string
         default: 'build'
   schedule:
-    - cron: '0 21 * * 5'
+    - cron: '0 12 1 * *'
   pull_request:
     paths:
       - ".github/workflows/build.yml"
@@ -121,6 +121,7 @@ jobs:
             org.opencontainers.image.authors=${{ github.repository_owner }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             build_version=${{ env.RADARRVERSION }}
+            build_commit=${{ github.event.pull_request.head.sha || github.sha }}
           tags: |
             type=raw,value=${{ env.BRANCH }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
             type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
