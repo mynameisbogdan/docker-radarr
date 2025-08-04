@@ -23,34 +23,25 @@ on:
       - "root/**"
       - "Dockerfile"
 
-permissions:
-  contents: read
-  packages: write
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.branch || 'build' }}
   cancel-in-progress: true
 
+env:
+  FRAMEWORK: net8.0
+  BRANCH_TO_BUILD: ${{ inputs.branch || 'build' }}
+
 jobs:
-  build:
-    name: "Build Docker Image (${{ inputs.branch || 'build' }})"
-    runs-on: ubuntu-latest
+  prepare:
     if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.variables.outputs.version }}
+      branch: ${{ steps.variables.outputs.branch }}
+      tag_branch: ${{ steps.variables.outputs.tag_branch }}
     env:
-      CI: 1
-      FORCE_COLOR: 0
-      NO_COLOR: 1
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      BUILD_SOURCEBRANCHNAME: develop
-      BRANCH_TO_BUILD: ${{ inputs.branch || 'build' }}
       RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
-      - name: Generate metadata
-        id: gen_meta
-        run: |
-          echo "tag_branch=${{ env.BRANCH_TO_BUILD }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
-          echo "BRANCH=${RAW_BRANCH_NAME//\//-}" >> "$GITHUB_ENV"
-
       - name: Retrieving external version
         id: ext_release
         run: |
@@ -63,7 +54,7 @@ jobs:
           EXT_RELEASE=$(echo ${EXT_RELEASE} | sed 's/[~,%@+;:/]//g')
           echo "**** External version: ${EXT_RELEASE} ****"
           echo "External version: ${EXT_RELEASE}" >> $GITHUB_STEP_SUMMARY
-          echo "RADARRVERSION=${EXT_RELEASE}" >> $GITHUB_ENV
+          echo "VERSION=${EXT_RELEASE}" >> $GITHUB_ENV
           if [[ "${EXT_RELEASE}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.([0-9]+)$ ]]; then
             SEMVER="${BASH_REMATCH[1]}"
             echo "**** Semantic version: ${SEMVER} ****"
@@ -74,82 +65,143 @@ jobs:
             exit 2
           fi
 
-      - uses: actions/checkout@v4.2.2
+      - name: Setup Environment Variables
+        id: variables
+        shell: bash
+        run: |
+          echo "version=${{ env.VERSION }}" >> "$GITHUB_OUTPUT"
+          echo "branch=${RAW_BRANCH_NAME//\//-}" >> "$GITHUB_OUTPUT"
+          echo "tag_branch=${{ env.BRANCH_TO_BUILD }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
 
-      - uses: actions/checkout@v4.2.2
+  backend:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        runtime:
+          - linux-musl-x64
+          - linux-x64
+          - osx-x64
+        branch:
+          - ${{ inputs.branch || 'build' }}
+    runs-on: ${{ matrix.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      BUILD_SOURCEBRANCHNAME: develop
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4.2.2
         with:
           repository: ${{ github.repository_owner }}/Radarr
-          ref: ${{ env.BRANCH_TO_BUILD }}
-          path: build
-
-      - uses: actions/setup-node@v4.4.0
-        with:
-          node-version: '20.x'
+          ref: ${{ matrix.branch }}
 
       - uses: actions/setup-dotnet@v4.3.1
         with:
           dotnet-version: '8.0.x'
 
-      - working-directory: build
-        run: dotnet --info
+      - run: dotnet --info
+
+      - name: Setup Environment Variables
+        run: |
+          echo "RADARRVERSION=${{ needs.prepare.outputs.version }}" >> "$GITHUB_ENV"
 
       - name: Build Backend
-        working-directory: build
         run: |
-          ./build.sh --backend -f net8.0 -r linux-musl-x64
+          ./build.sh --backend -f "${{ env.FRAMEWORK }}" -r "${{ matrix.runtime }}"
 
-      - name: Build Frontend
-        working-directory: build
+      - name: Package
         run: |
-          ./build.sh --frontend --lint
+          sed -i '/cp -r \$outputFolder\/UI \$folder/d' build.sh
+          ./build.sh --packages -f "${{ env.FRAMEWORK }}" -r "${{ matrix.runtime }}"
 
-      - name: Build Package
-        working-directory: build
-        run: |
-          ./build.sh --packages -f net8.0 -r linux-musl-x64
-          rm -rf _artifacts/linux-musl-x64/net8.0/Radarr/Radarr.Update
-          find . -name "Radarr" -exec chmod a+x {} \;
-          find . -name "ffprobe" -exec chmod a+x {} \;
-
-      - name: Docker meta
-        id: docker_meta
-        uses: docker/metadata-action@v5.8.0
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4.6.2
         with:
-          images: |
-            ghcr.io/${{ github.repository_owner }}/radarr
-          labels: |
-            org.opencontainers.image.authors=${{ github.repository_owner }}
-            org.opencontainers.image.vendor=${{ github.repository_owner }}
-            build_version=${{ env.RADARRVERSION }}
-          tags: |
-            type=raw,value=${{ env.BRANCH }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
-            type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
-            type=raw,value=${{ env.BRANCH }}-${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
-            type=raw,value=${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
-            type=raw,value=${{ env.BRANCH }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD == 'build' }}
-            type=raw,value=${{ steps.gen_meta.outputs.tag_branch }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'build' }}
-            type=raw,value=branch-${{ steps.gen_meta.outputs.tag_branch }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'build' }}
-            type=ref,event=pr
+          name: build-${{ matrix.runtime }}
+          path: _artifacts/**/*
+          retention-days: 1
+          if-no-files-found: error
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.11.1
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
         with:
-          platforms: linux/amd64
+          repository: ${{ github.repository_owner }}/Radarr
+          ref: ${{ env.BRANCH_TO_BUILD }}
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3.4.0
+      - uses: actions/setup-node@v4.4.0
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          node-version: '20.x'
 
-      - name: Build and push
-        uses: docker/build-push-action@v6.18.0
+      - name: Yarn Install
+        run: yarn install
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Stylelint
+        run: yarn stylelint "frontend/**/*.css" --config frontend/.stylelintrc -f github
+
+      - name: Build
+        run: yarn build --env production
+
+      - name: Publish UI Artifact
+        uses: actions/upload-artifact@v4.6.2
         with:
-          context: .
-          push: true
-          platforms: linux/amd64
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
-          build-args: |
-            VERSION=${{ env.RADARRVERSION }}-${{ env.BRANCH }}-r${{ github.run_number }}
+          name: build_ui
+          path: _output/UI/**/*
+          retention-days: 1
+          if-no-files-found: error
+
+#      - name: Build Package
+#        working-directory: build
+#        run: |
+#          ./build.sh --packages -f net8.0 -r linux-musl-x64
+#          rm -rf _artifacts/linux-musl-x64/net8.0/Radarr/Radarr.Update
+#          find . -name "Radarr" -exec chmod a+x {} \;
+#          find . -name "ffprobe" -exec chmod a+x {} \;
+#
+#      - name: Docker meta
+#        id: docker_meta
+#        uses: docker/metadata-action@v5.8.0
+#        with:
+#          images: |
+#            ghcr.io/${{ github.repository_owner }}/radarr
+#          labels: |
+#            org.opencontainers.image.authors=${{ github.repository_owner }}
+#            org.opencontainers.image.vendor=${{ github.repository_owner }}
+#            build_version=${{ env.RADARRVERSION }}
+#          tags: |
+#            type=raw,value=${{ env.BRANCH }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
+#            type=raw,value=${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
+#            type=raw,value=${{ env.BRANCH }}-${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name != 'master' && github.ref_name != 'main') && env.BRANCH_TO_BUILD == 'build' }}
+#            type=raw,value=${{ env.SEMVER }},enable=${{ github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_name == 'main') && env.BRANCH_TO_BUILD == 'build' }}
+#            type=raw,value=${{ env.BRANCH }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD == 'build' }}
+#            type=raw,value=${{ steps.gen_meta.outputs.tag_branch }}-${{ env.RADARRVERSION }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'build' }}
+#            type=raw,value=branch-${{ steps.gen_meta.outputs.tag_branch }},enable=${{ github.event_name != 'pull_request' && env.BRANCH_TO_BUILD != 'build' }}
+#            type=ref,event=pr
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3.11.1
+#        with:
+#          platforms: linux/amd64
+#
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v3.4.0
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.repository_owner }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Build and push
+#        uses: docker/build-push-action@v6.18.0
+#        with:
+#          context: .
+#          push: true
+#          platforms: linux/amd64
+#          tags: ${{ steps.docker_meta.outputs.tags }}
+#          labels: ${{ steps.docker_meta.outputs.labels }}
+#          build-args: |
+#            VERSION=${{ env.RADARRVERSION }}-${{ env.BRANCH }}-r${{ github.run_number }}
