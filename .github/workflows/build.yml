@@ -155,6 +155,42 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+  package:
+    needs:
+      [
+        prepare,
+        backend,
+        frontend,
+      ]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        runtime:
+          - linux-musl-x64
+          - linux-x64
+          - osx-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: build-${{ matrix.runtime }}
+          path: _output
+
+      - name: Download UI Artifact
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: build_ui
+          path: _output/UI
+
+      - name: Create Packages
+        run: |
+          ./build.sh --packages -f net8.0 -r linux-musl-x64
+          rm -rf _artifacts/linux-musl-x64/net8.0/Radarr/Radarr.Update
+          find . -name "Radarr" -exec chmod a+x {} \;
+          find . -name "ffprobe" -exec chmod a+x {} \;
+
 #      - name: Build Package
 #        working-directory: build
 #        run: |
