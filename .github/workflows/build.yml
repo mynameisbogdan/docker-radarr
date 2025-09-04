@@ -25,7 +25,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.branch || 'build' }}
@@ -36,6 +35,8 @@ jobs:
     name: "Build Docker Image (${{ inputs.branch || 'build' }})"
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.head.repo.fork }}
+    permissions:
+      packages: write
     env:
       CI: 1
       FORCE_COLOR: 0
@@ -153,3 +154,5 @@ jobs:
           labels: ${{ steps.docker_meta.outputs.labels }}
           build-args: |
             VERSION=${{ env.RADARRVERSION }}-${{ env.BRANCH }}-r${{ github.run_number }}
+
+
