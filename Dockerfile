@@ -21,7 +21,6 @@ RUN set -eux && \
     ca-certificates \
     catatonit \
     icu-libs \
-    sqlite-libs \
     tzdata \
     gnu-libiconv \
     file && \
