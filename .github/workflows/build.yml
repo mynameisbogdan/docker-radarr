@@ -127,10 +127,6 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_NOLOGO: 1
     steps:
-      - name: Setup environment variables
-        run: |
-          echo "RADARRVERSION=${{ needs.prepare.outputs.version }}" >> "$GITHUB_ENV"
-
       - name: Check out
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
@@ -146,15 +142,28 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - working-directory: build
-        run: dotnet --info
-
       - name: Build
         working-directory: build
         env:
-          BUILD_SOURCEBRANCHNAME: develop
-        run: |
-          ./build.sh --backend -f ${{ needs.prepare.outputs.framework }} -r ${{ matrix.runtime }}
+          RUNTIME: ${{ matrix.runtime }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          SEMVER: ${{ needs.prepare.outputs.semantic_version }}
+        run: >-
+          [[ "$RUNTIME" == "win"* ]] && PLATFORM=Windows || PLATFORM=Posix
+
+          rm -rf _output _tests
+
+          dotnet msbuild
+          -restore src/Radarr.sln
+          -p:SelfContained=true
+          -p:Configuration=Release
+          -p:Platform=$PLATFORM
+          -p:RuntimeIdentifiers=$RUNTIME
+          -p:EnableWindowsTargeting=true
+          -t:PublishAllRids
+          -p:Version="$SEMVER"
+          -p:AssemblyVersion="$VERSION"
+          -p:AssemblyConfiguration=develop
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
