@@ -80,14 +80,14 @@ Npgsql                                                       9.0.4              
 Polly                                                        8.6.4                dotnet  (+5 duplicates)  
 Polly.Contrib.WaitAndRetry                                   1.1.1                dotnet  (+7 duplicates)  
 Polly.Core                                                   8.6.4                dotnet  (+5 duplicates)  
-Radarr                                                       6.0.3                dotnet                   
-Radarr.Api.V3                                                6.0.3                dotnet  (+2 duplicates)  
-Radarr.Common                                                6.0.3                dotnet  (+7 duplicates)  
-Radarr.Core                                                  6.0.3                dotnet  (+5 duplicates)  
-Radarr.Host                                                  6.0.3                dotnet  (+1 duplicate)   
-Radarr.Http                                                  6.0.3                dotnet  (+3 duplicates)  
-Radarr.Mono                                                  6.0.3                dotnet                   
-Radarr.SignalR                                               6.0.3                dotnet  (+4 duplicates)  
+Radarr                                                       6.0.4                dotnet                   
+Radarr.Api.V3                                                6.0.4                dotnet  (+2 duplicates)  
+Radarr.Common                                                6.0.4                dotnet  (+7 duplicates)  
+Radarr.Core                                                  6.0.4                dotnet  (+5 duplicates)  
+Radarr.Host                                                  6.0.4                dotnet  (+1 duplicate)   
+Radarr.Http                                                  6.0.4                dotnet  (+3 duplicates)  
+Radarr.Mono                                                  6.0.4                dotnet                   
+Radarr.SignalR                                               6.0.4                dotnet  (+4 duplicates)  
 ReusableTasks                                                4.0.0                dotnet  (+5 duplicates)  
 Sentry                                                       4.0.2                dotnet  (+7 duplicates)  
 Servarr.FFMpegCore                                           4.7.0-26             dotnet  (+5 duplicates)  
