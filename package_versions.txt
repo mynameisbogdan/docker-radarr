@@ -83,13 +83,13 @@ Polly                                                        8.6.5              
 Polly.Contrib.WaitAndRetry                                   1.1.1                dotnet  (+7 duplicates)  
 Polly.Core                                                   8.6.5                dotnet  (+5 duplicates)  
 Radarr                                                       6.1.1                dotnet                   
-Radarr.Api.V3                                                6.1.1                dotnet  (+2 duplicates)  
-Radarr.Common                                                6.1.1                dotnet  (+7 duplicates)  
-Radarr.Core                                                  6.1.1                dotnet  (+5 duplicates)  
-Radarr.Host                                                  6.1.1                dotnet  (+1 duplicate)   
-Radarr.Http                                                  6.1.1                dotnet  (+3 duplicates)  
+Radarr.Api.V3                                                6.1.1                dotnet                   
+Radarr.Common                                                6.1.1                dotnet                   
+Radarr.Core                                                  6.1.1                dotnet                   
+Radarr.Host                                                  6.1.1                dotnet                   
+Radarr.Http                                                  6.1.1                dotnet                   
 Radarr.Mono                                                  6.1.1                dotnet                   
-Radarr.SignalR                                               6.1.1                dotnet  (+4 duplicates)  
+Radarr.SignalR                                               6.1.1                dotnet                   
 ReusableTasks                                                4.0.0                dotnet  (+5 duplicates)  
 Sentry                                                       5.16.2               dotnet  (+7 duplicates)  
 SharpZipLib                                                  1.4.2                dotnet  (+7 duplicates)  
