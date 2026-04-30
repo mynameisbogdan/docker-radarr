@@ -21,7 +21,7 @@ MailKit                                                      4.16.0             
 Microsoft.AspNetCore.Cryptography.Internal                   10.0.7               dotnet                   
 Microsoft.AspNetCore.Cryptography.KeyDerivation              10.0.7               dotnet                   
 Microsoft.Bcl.Cryptography                                   9.0.13               dotnet  (+5 duplicates)  
-Microsoft.Data.SqlClient                                     7.0.0                dotnet  (+5 duplicates)  
+Microsoft.Data.SqlClient                                     7.0.1                dotnet  (+5 duplicates)  
 Microsoft.Data.SqlClient.Extensions.Abstractions             1.0.0                dotnet  (+5 duplicates)  
 Microsoft.Data.SqlClient.Internal.Logging                    1.0.0                dotnet  (+5 duplicates)  
 Microsoft.Extensions.Caching.Abstractions                    9.0.13               dotnet                   
