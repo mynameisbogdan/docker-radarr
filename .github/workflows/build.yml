@@ -8,6 +8,9 @@ on:
         required: true
         type: string
         default: 'build'
+      version:
+        description: 'Version'
+        type: string
   schedule:
     - cron: '0 12 1 * *'
   pull_request:
@@ -57,12 +60,16 @@ jobs:
 
       - name: Retrieving external version
         id: ext_release
+        env:
+          EXT_RELEASE: ${{ inputs.version }}
         run: |
-          EXT_RELEASE=$(curl -sL "https://radarr.servarr.com/v1/update/nightly/changes?runtime=netcore&os=linuxmusl" | jq -r '.[0].version')
           if [ -z "${EXT_RELEASE}" ] || [ "${EXT_RELEASE}" == "null" ]; then
-            echo "**** Can't retrieve external version, exiting ****"
-            echo "Can't retrieve external version, exiting" >> $GITHUB_STEP_SUMMARY
-            exit 1
+            EXT_RELEASE=$(curl -sL "https://radarr.servarr.com/v1/update/nightly/changes?runtime=netcore&os=linuxmusl" | jq -r '.[0].version')
+            if [ -z "${EXT_RELEASE}" ] || [ "${EXT_RELEASE}" == "null" ]; then
+              echo "**** Can't retrieve external version, exiting ****"
+              echo "Can't retrieve external version, exiting" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
           fi
           EXT_RELEASE=$(echo ${EXT_RELEASE} | sed 's/[~,%@+;:/]//g')
           echo "**** External version: ${EXT_RELEASE} ****"
