@@ -79,14 +79,14 @@ Openur.FFprobeStatic                                         8.1.2.364          
 Polly                                                        8.7.0                dotnet  (+5 duplicates)  
 Polly.Contrib.WaitAndRetry                                   1.1.1                dotnet  (+7 duplicates)  
 Polly.Core                                                   8.7.0                dotnet  (+5 duplicates)  
-Radarr                                                       6.2.1                dotnet                   
-Radarr.Api.V3                                                6.2.1                dotnet                   
-Radarr.Common                                                6.2.1                dotnet                   
-Radarr.Core                                                  6.2.1                dotnet                   
-Radarr.Host                                                  6.2.1                dotnet                   
-Radarr.Http                                                  6.2.1                dotnet                   
-Radarr.Mono                                                  6.2.1                dotnet                   
-Radarr.SignalR                                               6.2.1                dotnet                   
+Radarr                                                       6.3.0                dotnet                   
+Radarr.Api.V3                                                6.3.0                dotnet                   
+Radarr.Common                                                6.3.0                dotnet                   
+Radarr.Core                                                  6.3.0                dotnet                   
+Radarr.Host                                                  6.3.0                dotnet                   
+Radarr.Http                                                  6.3.0                dotnet                   
+Radarr.Mono                                                  6.3.0                dotnet                   
+Radarr.SignalR                                               6.3.0                dotnet                   
 ReusableTasks                                                4.0.0                dotnet  (+5 duplicates)  
 Sentry                                                       5.16.3               dotnet  (+7 duplicates)  
 SharpZipLib                                                  1.4.2                dotnet  (+7 duplicates)  
@@ -116,7 +116,7 @@ c-ares                                                       1.34.6-r0          
 ca-certificates                                              20260611-r0          apk                      
 ca-certificates-bundle                                       20260611-r0          apk                      
 catatonit                                                    0.2.1-r0             apk                      
-curl                                                         8.20.0-r1            apk                      
+curl                                                         8.21.0-r0            apk                      
 file                                                         5.47-r2              apk                      
 gnu-libiconv                                                 1.18-r0              apk                      
 gnu-libiconv-libs                                            1.18-r0              apk                      
@@ -124,7 +124,7 @@ icu-data-en                                                  78.1-r0            
 icu-libs                                                     78.1-r0              apk                      
 libapk                                                       3.0.6-r0             apk                      
 libcrypto3                                                   3.5.7-r0             apk                      
-libcurl                                                      8.20.0-r1            apk                      
+libcurl                                                      8.21.0-r0            apk                      
 libgcc                                                       15.2.0-r5            apk                      
 libidn2                                                      2.3.8-r0             apk                      
 libmagic                                                     5.47-r2              apk                      
