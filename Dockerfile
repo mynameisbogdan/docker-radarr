@@ -24,6 +24,7 @@ RUN set -eux && \
     catatonit \
     curl \
     icu-libs \
+    krb5-libs \
     tzdata \
     gnu-libiconv \
     file && \
