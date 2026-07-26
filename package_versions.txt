@@ -79,14 +79,14 @@ Openur.FFprobeStatic                                         8.1.2.397          
 Polly                                                        8.7.0                dotnet  (+5 duplicates)  
 Polly.Contrib.WaitAndRetry                                   1.1.1                dotnet  (+7 duplicates)  
 Polly.Core                                                   8.7.0                dotnet  (+5 duplicates)  
-Radarr                                                       6.4.0                dotnet                   
-Radarr.Api.V3                                                6.4.0                dotnet                   
-Radarr.Common                                                6.4.0                dotnet                   
-Radarr.Core                                                  6.4.0                dotnet                   
-Radarr.Host                                                  6.4.0                dotnet                   
-Radarr.Http                                                  6.4.0                dotnet                   
-Radarr.Mono                                                  6.4.0                dotnet                   
-Radarr.SignalR                                               6.4.0                dotnet                   
+Radarr                                                       6.4.1                dotnet                   
+Radarr.Api.V3                                                6.4.1                dotnet                   
+Radarr.Common                                                6.4.1                dotnet                   
+Radarr.Core                                                  6.4.1                dotnet                   
+Radarr.Host                                                  6.4.1                dotnet                   
+Radarr.Http                                                  6.4.1                dotnet                   
+Radarr.Mono                                                  6.4.1                dotnet                   
+Radarr.SignalR                                               6.4.1                dotnet                   
 ReusableTasks                                                4.0.0                dotnet  (+5 duplicates)  
 Sentry                                                       5.16.3               dotnet  (+7 duplicates)  
 SharpZipLib                                                  1.4.2                dotnet  (+7 duplicates)  
