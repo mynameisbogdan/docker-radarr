@@ -96,7 +96,7 @@ Swashbuckle.AspNetCore.Annotations                           10.2.3            d
 Swashbuckle.AspNetCore.Swagger                               10.2.3            dotnet  (+2 duplicates)  
 Swashbuckle.AspNetCore.SwaggerGen                            10.2.3            dotnet  (+2 duplicates)  
 System.Configuration.ConfigurationManager                    10.0.10           dotnet  (+7 duplicates)  
-System.Data.SQLite                                           2.0.3             dotnet  (+7 duplicates)  
+System.Data.SQLite                                           2.0.4             dotnet  (+7 duplicates)  
 System.Diagnostics.EventLog                                  10.0.10           dotnet  (+2 duplicates)  
 System.Drawing.Common                                        10.0.10           dotnet  (+5 duplicates)  
 System.IdentityModel.Tokens.Jwt                              8.16.0            dotnet  (+5 duplicates)  
