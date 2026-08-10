@@ -74,7 +74,7 @@ Newtonsoft.Json                                              13.0.4            d
 NodaTime                                                     3.2.2             dotnet  (+2 duplicates)  
 Npgsql                                                       10.0.3            dotnet  (+7 duplicates)  
 Openur.FFMpegCore                                            5.4.0.37          dotnet  (+5 duplicates)  
-Openur.FFprobeStatic                                         9.0.0.408         dotnet  (+5 duplicates)  
+Openur.FFprobeStatic                                         9.0.0.458         dotnet  (+5 duplicates)  
 Openur.Mono.Unix                                             7.1.0.256         dotnet                   
 Polly                                                        8.7.0             dotnet  (+5 duplicates)  
 Polly.Contrib.WaitAndRetry                                   1.1.1             dotnet  (+7 duplicates)  
