@@ -23,10 +23,10 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  scan:
     permissions:
       security-events: write
-    name: Build
+    name: Scan image
     runs-on: ubuntu-latest
     steps:
       - name: Run Trivy vulnerability scanner
