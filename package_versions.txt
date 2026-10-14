@@ -65,14 +65,14 @@ Openur.Mono.Unix                                             7.1.0.256         d
 Polly                                                        8.8.0             dotnet  (+5 duplicates)  
 Polly.Contrib.WaitAndRetry                                   1.1.1             dotnet  (+7 duplicates)  
 Polly.Core                                                   8.8.0             dotnet  (+5 duplicates)  
-Radarr                                                       6.4.4             dotnet                   
-Radarr.Api.V3                                                6.4.4             dotnet                   
-Radarr.Common                                                6.4.4             dotnet                   
-Radarr.Core                                                  6.4.4             dotnet                   
-Radarr.Host                                                  6.4.4             dotnet                   
-Radarr.Http                                                  6.4.4             dotnet                   
-Radarr.Mono                                                  6.4.4             dotnet                   
-Radarr.SignalR                                               6.4.4             dotnet                   
+Radarr                                                       7.0.0             dotnet                   
+Radarr.Api.V3                                                7.0.0             dotnet                   
+Radarr.Common                                                7.0.0             dotnet                   
+Radarr.Core                                                  7.0.0             dotnet                   
+Radarr.Host                                                  7.0.0             dotnet                   
+Radarr.Http                                                  7.0.0             dotnet                   
+Radarr.Mono                                                  7.0.0             dotnet                   
+Radarr.SignalR                                               7.0.0             dotnet                   
 ReusableTasks                                                4.0.0             dotnet  (+5 duplicates)  
 Sentry                                                       5.16.3            dotnet  (+7 duplicates)  
 SharpZipLib                                                  1.4.2             dotnet  (+7 duplicates)  
@@ -83,7 +83,7 @@ Swashbuckle.AspNetCore.Swagger                               10.3.0            d
 Swashbuckle.AspNetCore.SwaggerGen                            10.3.0            dotnet  (+2 duplicates)  
 System.Data.SQLite                                           2.0.4             dotnet  (+7 duplicates)  
 System.Diagnostics.EventLog                                  10.0.13           dotnet  (+2 duplicates)  
-System.Security.Cryptography.Pkcs                            10.0.0            dotnet                   
+System.Security.Cryptography.Pkcs                            10.0.13           dotnet                   
 System.ServiceProcess.ServiceController                      10.0.13           dotnet  (+7 duplicates)  
 alpine-baselayout                                            3.7.2-r1          apk                      
 alpine-baselayout-data                                       3.7.2-r1          apk                      
