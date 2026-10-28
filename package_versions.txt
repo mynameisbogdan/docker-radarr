@@ -73,14 +73,14 @@ Openur.Mono.Unix                                             7.1.0.256         d
 Polly                                                        8.8.0             dotnet  (+5 duplicates)  
 Polly.Contrib.WaitAndRetry                                   1.1.1             dotnet  (+7 duplicates)  
 Polly.Core                                                   8.8.0             dotnet  (+5 duplicates)  
-Radarr                                                       7.0.0             dotnet                   
-Radarr.Api.V3                                                7.0.0             dotnet                   
-Radarr.Common                                                7.0.0             dotnet                   
-Radarr.Core                                                  7.0.0             dotnet                   
-Radarr.Host                                                  7.0.0             dotnet                   
-Radarr.Http                                                  7.0.0             dotnet                   
-Radarr.Mono                                                  7.0.0             dotnet                   
-Radarr.SignalR                                               7.0.0             dotnet                   
+Radarr                                                       7.0.1             dotnet                   
+Radarr.Api.V3                                                7.0.1             dotnet                   
+Radarr.Common                                                7.0.1             dotnet                   
+Radarr.Core                                                  7.0.1             dotnet                   
+Radarr.Host                                                  7.0.1             dotnet                   
+Radarr.Http                                                  7.0.1             dotnet                   
+Radarr.Mono                                                  7.0.1             dotnet                   
+Radarr.SignalR                                               7.0.1             dotnet                   
 ReusableTasks                                                4.0.0             dotnet  (+5 duplicates)  
 Sentry                                                       5.16.3            dotnet  (+7 duplicates)  
 SharpZipLib                                                  1.4.2             dotnet  (+7 duplicates)  
